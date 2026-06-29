@@ -1,7 +1,7 @@
 {
   "name": "pi-peekaboo",
   "version": "0.1.0",
-  "description": "Dormant Peekaboo desktop automation extension for Pi. Enable on demand with /peekaboo.",
+  "description": "Peekaboo desktop automation for Pi. Enable macOS screen and UI control with /peekaboo.",
   "keywords": [
     "pi-package",
     "pi-extension",

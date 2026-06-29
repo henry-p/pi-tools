@@ -1,8 +1,18 @@
 # pi-peekaboo
 
-Dormant [Peekaboo](https://peekaboo.sh/) desktop automation extension for [Pi](https://pi.dev/).
+**Peekaboo desktop automation for [Pi](https://pi.dev/): let the agent inspect macOS windows, capture screenshots, and drive UI actions through the [Peekaboo CLI](https://peekaboo.sh/).**
 
-The extension is intentionally dormant: it only registers a lightweight `/peekaboo` command at startup. The actual `peekaboo` tool and usage guidance are added to the model context only after you run `/peekaboo`.
+[![npm version](https://img.shields.io/npm/v/pi-peekaboo.svg?style=for-the-badge)](https://www.npmjs.com/package/pi-peekaboo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
+![Platform](https://img.shields.io/badge/Platform-macOS-blue?style=for-the-badge)
+
+## Why pi-peekaboo
+
+- **Native desktop visibility** — give Pi screenshots and UI trees from real macOS apps, not just browser pages.
+- **Actionable automation** — click, type, hotkey, scroll, drag, and target UI elements by fresh Peekaboo element IDs.
+- **Session-level control** — enable desktop automation with `/peekaboo`, disable it with `/peekaboo off`.
+- **Safety prompts by default** — observation commands run directly; desktop actions and AI-provider calls ask first.
+- **Shell-safe execution** — the tool accepts argv arrays and runs `peekaboo` directly via Pi's extension API.
 
 ## Install
 
@@ -10,54 +20,131 @@ The extension is intentionally dormant: it only registers a lightweight `/peekab
 pi install npm:pi-peekaboo
 ```
 
-For local development from a checkout:
+Then restart Pi.
+
+For local development from this monorepo:
 
 ```bash
 pi install ./packages/pi-peekaboo
 ```
 
-## Usage
+## Requirements
 
-Enable Peekaboo for the current Pi session:
+- macOS 15+
+- Peekaboo installed:
+
+  ```bash
+  brew install steipete/tap/peekaboo
+  ```
+
+- Screen Recording permission
+- Accessibility permission recommended for reliable clicks, typing, and window control
+
+Check permissions from Pi after enabling the extension:
+
+```text
+/peekaboo check permissions
+```
+
+## Quick Start
+
+Enable Peekaboo for the current session:
 
 ```text
 /peekaboo
 ```
 
-Enable it and immediately start a task:
+Enable it and immediately ask Pi to inspect an app:
 
 ```text
 /peekaboo inspect the current Safari window
 ```
 
-Disable it for the current session:
+Turn it off:
 
 ```text
 /peekaboo off
 ```
 
-When enabled, the extension exposes one generic `peekaboo` tool:
+Once enabled, Pi can call the `peekaboo` tool:
 
-```json
-{
-  "args": ["see", "--json", "--path", "/tmp/peekaboo-see.png"],
-  "timeoutMs": 30000
-}
+```js
+peekaboo({
+  args: ["see", "--json", "--annotate", "--path", "/tmp/peekaboo-see.png"],
+  timeoutMs: 30000,
+})
 ```
 
-The tool runs `peekaboo` with argv arguments via Pi's extension API, not through a shell string.
+## Common Workflows
 
-## Safety
+### Inspect what is on screen
 
-- Read-only commands like `tools`, `list`, `see`, `image`, and `permissions status` run directly.
-- Desktop action commands like `click`, `type`, `hotkey`, and `window` prompt for confirmation.
-- `peekaboo mcp` is blocked because it is a long-running server process.
-- `peekaboo agent`, `analyze`, and screenshot analysis require confirmation because they may invoke external AI providers.
-- Set `PI_PEEKABOO_ALLOW_ACTIONS=1` to skip confirmation prompts for action commands.
+```js
+peekaboo({ args: ["see", "--json", "--annotate", "--path", "/tmp/peekaboo-see.png"] })
+```
 
-## Requirements
+Use this before taking action. The JSON output gives Pi element IDs and labels it can target later.
 
-- macOS 15+
-- Peekaboo installed (`brew install steipete/tap/peekaboo`)
-- Screen Recording permission
-- Accessibility permission recommended for robust automation
+### Inspect the accessibility tree
+
+```js
+peekaboo({ args: ["inspect-ui", "--json"] })
+```
+
+Useful when screenshots alone are ambiguous or when you need semantic UI roles.
+
+### Click or type into an app
+
+```js
+peekaboo({ args: ["click", "--on", "<element-id>"] })
+peekaboo({ args: ["type", "hello from Pi"] })
+```
+
+Action commands prompt for confirmation unless you opt out with `PI_PEEKABOO_ALLOW_ACTIONS=1`.
+
+### Check installed Peekaboo tools
+
+```js
+peekaboo({ args: ["tools", "--json"] })
+```
+
+## Tool
+
+### `peekaboo`
+
+Runs the Peekaboo macOS CLI with argv arguments.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `args` | `string[]` | Arguments passed after the `peekaboo` executable, e.g. `["see", "--json"]`. |
+| `timeoutMs` | `number` | Optional timeout in milliseconds. Defaults to `30000`; clamped to 10 minutes. |
+
+Output is truncated to Pi's normal tool-output limits. If Peekaboo prints more than fits in context, the full output is saved to a temporary file and the tool result includes that path.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `/peekaboo` | Enable Peekaboo for the current Pi session. |
+| `/peekaboo <task>` | Enable Peekaboo, then send `<task>` to the agent. |
+| `/peekaboo off` | Disable the `peekaboo` tool for the current session. |
+
+## Safety Model
+
+- Read-only commands such as `tools`, `list`, `see`, `image`, `inspect-ui`, and `permissions status` run directly.
+- Desktop action commands such as `click`, `type`, `hotkey`, `scroll`, `drag`, and `window` require confirmation.
+- `peekaboo mcp` is blocked because it starts a long-running server process.
+- `peekaboo agent`, `analyze`, and screenshot-analysis modes require confirmation because they may invoke external AI providers.
+- Non-interactive sessions block action commands by default. Set `PI_PEEKABOO_ALLOW_ACTIONS=1` only when you intentionally want unattended desktop control.
+
+## Tips for Agents
+
+- Observe before acting: run `see --json --path ...` or `inspect-ui --json` first.
+- Prefer fresh element IDs over text labels; prefer labels over coordinates.
+- Re-observe after each UI-changing action.
+- Pass `--json` whenever Peekaboo supports it.
+- Ask the user before submitting forms, deleting data, sending messages, making purchases, clicking permission dialogs, or typing sensitive information.
+
+## License
+
+MIT
