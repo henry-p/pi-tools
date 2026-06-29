@@ -1,0 +1,40 @@
+{
+  "name": "pi-peekaboo",
+  "version": "0.1.0",
+  "description": "Dormant Peekaboo desktop automation extension for Pi. Enable on demand with /peekaboo.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "peekaboo",
+    "desktop-automation",
+    "macos"
+  ],
+  "author": "henry-p",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henry-p/pi-tools.git",
+    "directory": "packages/pi-peekaboo"
+  },
+  "bugs": {
+    "url": "https://github.com/henry-p/pi-tools/issues"
+  },
+  "homepage": "https://github.com/henry-p/pi-tools/tree/master/packages/pi-peekaboo#readme",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "extensions"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  }
+}
