@@ -1,12 +1,18 @@
 {
   "name": "pi-peekaboo",
   "version": "0.1.0",
-  "description": "Peekaboo desktop automation for Pi. Enable macOS screen and UI control with /peekaboo.",
+  "description": "Computer use for Pi via Peekaboo. Enable macOS screen capture, accessibility inspection, and GUI automation with /peekaboo.",
   "keywords": [
     "pi-package",
     "pi-extension",
     "peekaboo",
+    "computer-use",
+    "ai-computer-use",
     "desktop-automation",
+    "gui-automation",
+    "screen-control",
+    "accessibility",
+    "openai-codex",
     "macos"
   ],
   "author": "henry-p",

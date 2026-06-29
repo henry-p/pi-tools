@@ -1,6 +1,6 @@
 # pi-peekaboo
 
-**Peekaboo desktop automation for [Pi](https://pi.dev/): let the agent inspect macOS windows, capture screenshots, understand accessibility trees, and drive UI actions through the [Peekaboo CLI](https://peekaboo.sh/).**
+**Computer use for [Pi](https://pi.dev/) via Peekaboo: let the agent inspect macOS windows, capture screenshots, understand accessibility trees, and drive UI actions through the [Peekaboo CLI](https://peekaboo.sh/).**
 
 [![npm version](https://img.shields.io/npm/v/pi-peekaboo.svg?style=for-the-badge)](https://www.npmjs.com/package/pi-peekaboo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
@@ -8,6 +8,7 @@
 
 ## Why pi-peekaboo
 
+- **Computer use for Pi** — bring the same broad category as OpenAI Codex app computer use to Pi: screen visibility plus controlled GUI interaction when files, shell commands, browser tools, or plugins are not enough.
 - **Native desktop visibility** — give Pi screenshots, annotated element IDs, and UI trees from real macOS apps, not just browser pages.
 - **Actionable automation** — click, type, paste, hotkey, scroll, swipe, drag, move, and target UI elements by fresh Peekaboo element IDs.
 - **Broad Peekaboo CLI coverage** — expose installed Peekaboo subcommands for observation, capture, interaction, app/window control, system UI, browser MCP, and AI analysis through one Pi tool.
@@ -15,6 +16,19 @@
 - **Configurable safety model** — routine observation and UI actions can run by default, while high-risk desktop, system, credential, AI/network, and destructive actions are gated.
 - **Persistent and session grants** — allow, ask, or deny actions by tool, risk category, risk level, and target app; save durable rules or one-session exceptions.
 - **Shell-safe execution** — the tool accepts argv arrays and runs `peekaboo` directly via Pi's extension API.
+
+## Computer Use and OpenAI Codex
+
+OpenAI describes [Codex app computer use](https://developers.openai.com/codex/app/computer-use) as a way for Codex to see and operate graphical user interfaces when command-line tools or structured integrations are not enough—for example testing a desktop app, using a browser, changing app settings, reproducing a GUI-only bug, or inspecting information in an app that does not expose an API or plugin.
+
+`pi-peekaboo` is the Pi package for that same search intent: **computer use**, **AI computer use**, **desktop automation**, **screen control**, and **GUI automation** for Pi on macOS. It is not the OpenAI Codex Computer Use plugin; instead, it gives Pi agents a macOS-native computer-use bridge through Peekaboo:
+
+- Screen and window capture through Peekaboo screenshots.
+- Accessibility-tree inspection for semantic UI understanding.
+- Mouse, keyboard, menu, app, window, browser, and system-UI actions through `peekaboo` argv calls.
+- Permission prompts and configurable rules for high-risk actions that can affect apps or system state outside the project workspace.
+
+Use Pi's normal file, shell, and browser tools first when they are precise and repeatable. Use `pi-peekaboo` computer use when the task depends on a real graphical interface.
 
 ## Install
 
