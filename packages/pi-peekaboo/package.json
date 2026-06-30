@@ -1,6 +1,6 @@
 {
   "name": "pi-peekaboo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Computer use for Pi via Peekaboo. Enable macOS screen capture, accessibility inspection, and GUI automation with /peekaboo.",
   "keywords": [
     "pi-package",
