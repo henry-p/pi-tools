@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/pbakaus/impeccable",
+  "tag": "skill-v4.0.4",
+  "version": "4.0.4",
+  "commit": "9a949fb543d44cfb406f61bcab99d95d7f12cf1d",
+  "archiveUrl": "https://github.com/pbakaus/impeccable/archive/9a949fb543d44cfb406f61bcab99d95d7f12cf1d.tar.gz",
+  "archiveSha256": "c20054b6fec0dd59a8be5484268a3c102fa0a32d1f4a767206180929bee8e7aa",
+  "license": "Apache-2.0",
+  "importedAt": "2026-08-04T14:43:18.668Z"
+}

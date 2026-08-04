@@ -1,0 +1,53 @@
+{
+  "name": "pi-impeccable-skill",
+  "version": "0.1.0",
+  "description": "Impeccable design workflows for Pi, packaged from a pinned upstream release.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-skill",
+    "impeccable",
+    "design",
+    "frontend",
+    "ux"
+  ],
+  "author": "henry-p",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henry-p/pi-tools.git",
+    "directory": "packages/pi-impeccable-skill"
+  },
+  "bugs": {
+    "url": "https://github.com/henry-p/pi-tools/issues"
+  },
+  "homepage": "https://github.com/henry-p/pi-tools/tree/master/packages/pi-impeccable-skill#readme",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "type": "module",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "UPSTREAM.json",
+    "THIRD_PARTY_LICENSES",
+    "extensions",
+    "scripts",
+    "vendor"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "update:upstream": "node scripts/update-upstream.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/impeccable.js"
+    ],
+    "skills": [
+      "./vendor"
+    ]
+  }
+}
