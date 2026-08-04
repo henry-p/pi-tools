@@ -31,10 +31,17 @@ const server = http.createServer((request, response) => {
         const chunks = [];
         upstreamResponse.on("data", (chunk) => chunks.push(chunk));
         upstreamResponse.on("end", () => {
+          const publicPort = new URL(publicOrigin).port;
           const body = Buffer.concat(chunks)
             .toString("utf8")
             .replaceAll(`http://localhost:${targetPort}`, publicOrigin)
-            .replaceAll(`http://127.0.0.1:${targetPort}`, publicOrigin);
+            .replaceAll(`http://127.0.0.1:${targetPort}`, publicOrigin)
+            // The live bundle builds its API URLs from the injected port at
+            // runtime, so rewrite those URLs for a non-loopback browser too.
+            .replaceAll(`window.__IMPECCABLE_PORT__ = ${targetPort};`, `window.__IMPECCABLE_PORT__ = ${publicPort};`)
+            .replaceAll("'http://localhost:' + PORT", JSON.stringify(publicOrigin))
+            .replaceAll('"http://localhost:" + PORT', JSON.stringify(publicOrigin))
+            .replaceAll("http://localhost:${PORT}", publicOrigin);
           const headers = { ...upstreamResponse.headers };
           delete headers["content-length"];
           delete headers["content-encoding"];
