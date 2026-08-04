@@ -52,7 +52,16 @@ After an extension-managed install or update succeeds, Pi resources are reloaded
 /impeccable critique <target>
 /impeccable audit <target>
 /impeccable polish <target>
+/impeccable live-tailscale start [--target <path>] [--app-port <port>]
+/impeccable live-tailscale status
+/impeccable live-tailscale stop
 ```
+
+`live-tailscale` prepares Impeccable live mode for a browser on the same Tailnet. It
+keeps the upstream helper unchanged, proxies its loopback port over the machine's
+Tailscale IPv4 address, and rewrites the temporary injected script URL. The app's
+dev server must already be running and reachable on the remote machine (Astro's
+`host: true` is sufficient for direct Tailnet access).
 
 All upstream Impeccable commands remain available.
 

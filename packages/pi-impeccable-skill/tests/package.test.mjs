@@ -8,7 +8,9 @@ import { describe, it } from "node:test";
 import impeccablePiExtension, {
   getImpeccableCompletions,
   locateImpeccableSkill,
+  parseLiveTailscaleArgs,
   rewriteImpeccableScriptPaths,
+  rewriteLiveScriptOrigin,
 } from "../extensions/impeccable.js";
 
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -25,11 +27,13 @@ function fixtureSkill() {
 
 describe("Pi package", () => {
   it("ships only the adapter and depends on the official CLI", () => {
-    assert.equal(pkg.version, "0.2.0");
+    assert.equal(pkg.version, "0.3.0");
     assert.equal(pkg.keywords.includes("pi-package"), true);
     assert.deepEqual(pkg.pi, { extensions: ["./extensions/impeccable.js"] });
     assert.deepEqual(pkg.dependencies, { impeccable: "^3.5.0" });
+    assert.equal(pkg.files.includes("scripts"), true);
     assert.equal(pkg.files.includes("vendor"), false);
+    assert.equal(existsSync(join(PACKAGE_ROOT, "scripts", "tailscale-proxy.mjs")), true);
     assert.equal(existsSync(join(PACKAGE_ROOT, "vendor")), false);
   });
 
@@ -89,7 +93,34 @@ describe("/impeccable command", () => {
     });
     assert.deepEqual(completions?.map((item) => item.value), ["audit "]);
     assert.deepEqual(getImpeccableCompletions("up")?.map((item) => item.value), ["update"]);
+    assert.deepEqual(getImpeccableCompletions("live-t")?.map((item) => item.value), ["live-tailscale "]);
     assert.equal(getImpeccableCompletions("audit src"), null);
+  });
+
+  it("parses live-tailscale arguments", () => {
+    assert.deepEqual(parseLiveTailscaleArgs("start --target src/pages/index.astro --app-port 4321"), {
+      action: "start",
+      target: "src/pages/index.astro",
+      appPort: 4321,
+    });
+    assert.deepEqual(parseLiveTailscaleArgs("status"), {
+      action: "status",
+      target: undefined,
+      appPort: 4321,
+    });
+  });
+
+  it("rewrites only the injected live script tag", () => {
+    const root = join(tmpdir(), `pi-impeccable-rewrite-${process.pid}-${Date.now()}`);
+    const file = join(root, "index.html");
+    mkdirSync(root, { recursive: true });
+    writeFileSync(file, '<!-- impeccable-live-start --><script src="http://localhost:8410/live.js?token=secret"></script><!-- impeccable-live-end -->');
+    try {
+      assert.equal(rewriteLiveScriptOrigin(file, 8410, "http://100.64.0.1:9000"), true);
+      assert.match(readFileSync(file, "utf8"), /http:\/\/100\.64\.0\.1:9000\/live\.js\?token=secret/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("discovers the skill, forwards commands, and installs the bash hook", async () => {
