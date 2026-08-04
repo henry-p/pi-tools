@@ -27,7 +27,7 @@ function fixtureSkill() {
 
 describe("Pi package", () => {
   it("ships only the adapter and depends on the official CLI", () => {
-    assert.equal(pkg.version, "0.3.0");
+    assert.equal(pkg.version, "0.3.1");
     assert.equal(pkg.keywords.includes("pi-package"), true);
     assert.deepEqual(pkg.pi, { extensions: ["./extensions/impeccable.js"] });
     assert.deepEqual(pkg.dependencies, { impeccable: "^3.5.0" });

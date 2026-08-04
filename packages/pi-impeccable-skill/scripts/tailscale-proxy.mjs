@@ -2,6 +2,25 @@
 
 import http from "node:http";
 
+// crypto.randomUUID() is unavailable on non-localhost HTTP origins because they
+// are not secure contexts. The upstream live bundle currently calls it during
+// startup, before it can render controls or connect its event stream. Keep the
+// Tailnet HTTP transport usable by installing the narrow missing API first.
+const INSECURE_CONTEXT_UUID_POLYFILL = `
+if (!globalThis.crypto?.randomUUID) {
+  Object.defineProperty(globalThis.crypto, "randomUUID", {
+    configurable: true,
+    value() {
+      const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"));
+      return [hex.slice(0, 4).join(""), hex.slice(4, 6).join(""), hex.slice(6, 8).join(""), hex.slice(8, 10).join(""), hex.slice(10).join("")].join("-");
+    },
+  });
+}
+`;
+
 function option(name, fallback) {
   const index = process.argv.indexOf(name);
   return index === -1 ? fallback : process.argv[index + 1];
@@ -32,7 +51,7 @@ const server = http.createServer((request, response) => {
         upstreamResponse.on("data", (chunk) => chunks.push(chunk));
         upstreamResponse.on("end", () => {
           const publicPort = new URL(publicOrigin).port;
-          const body = Buffer.concat(chunks)
+          const body = INSECURE_CONTEXT_UUID_POLYFILL + Buffer.concat(chunks)
             .toString("utf8")
             .replaceAll(`http://localhost:${targetPort}`, publicOrigin)
             .replaceAll(`http://127.0.0.1:${targetPort}`, publicOrigin)
