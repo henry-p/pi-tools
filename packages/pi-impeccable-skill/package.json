@@ -1,7 +1,7 @@
 {
   "name": "pi-impeccable-skill",
-  "version": "0.1.0",
-  "description": "Impeccable design workflows for Pi, packaged from a pinned upstream release.",
+  "version": "0.2.0",
+  "description": "Upstream Impeccable design workflows for Pi with user-approved skill updates.",
   "keywords": [
     "pi-package",
     "pi-extension",
@@ -29,15 +29,13 @@
   "files": [
     "README.md",
     "LICENSE",
-    "UPSTREAM.json",
-    "THIRD_PARTY_LICENSES",
-    "extensions",
-    "scripts",
-    "vendor"
+    "extensions"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "update:upstream": "node scripts/update-upstream.mjs"
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "impeccable": "^3.5.0"
   },
   "publishConfig": {
     "access": "public"
@@ -45,9 +43,6 @@
   "pi": {
     "extensions": [
       "./extensions/impeccable.js"
-    ],
-    "skills": [
-      "./vendor"
     ]
   }
 }

@@ -1,24 +1,16 @@
 # pi-impeccable-skill
 
-[Impeccable](https://github.com/pbakaus/impeccable) design workflows packaged for [Pi](https://pi.dev/).
+[Impeccable](https://github.com/pbakaus/impeccable) design workflows for [Pi](https://pi.dev/), installed and updated with the official Impeccable CLI.
 
-This independently maintained adapter is not affiliated with or endorsed by the Impeccable project. It vendors the generated Pi skill from an exact upstream skill release and adds a small Pi extension that provides `/impeccable` command completion and makes bundled script paths work outside a project-local `.pi` directory.
+This independently maintained adapter is not affiliated with or endorsed by the Impeccable project. It adds a native `/impeccable` command, discovers the upstream skill, and fixes bundled script paths when the skill is installed globally.
 
 ## Install
-
-From npm after publication:
 
 ```bash
 pi install npm:pi-impeccable-skill
 ```
 
-For local development from this monorepo:
-
-```bash
-pi install ./packages/pi-impeccable-skill
-```
-
-Restart Pi or run `/reload`, then invoke a workflow:
+Restart Pi or run `/reload`. On the first Impeccable invocation, the extension asks before installing the latest upstream skill globally.
 
 ```text
 /impeccable init
@@ -27,40 +19,51 @@ Restart Pi or run `/reload`, then invoke a workflow:
 /impeccable polish src
 ```
 
-The original skill command remains available as `/skill:impeccable`.
+The original skill command remains available as `/skill:impeccable` after installation.
+
+## Updates
+
+Impeccable's own once-per-session version check detects newer skill releases. When an update is available, the agent asks before running the official updater. Nothing is changed silently.
+
+You can also update explicitly:
+
+```text
+/impeccable update
+```
+
+After an extension-managed install or update succeeds, Pi resources are reloaded. A failed or offline update leaves the existing skill untouched.
 
 ## How it works
 
-- `vendor/impeccable/` is an unmodified copy of `.pi/skills/impeccable/` from the pinned upstream release recorded in [`UPSTREAM.json`](./UPSTREAM.json).
-- `extensions/impeccable.js` registers `/impeccable`, forwards it to the vendored skill, and rewrites project-relative script calls to the package copy when the project does not have its own Impeccable installation.
-- A real project-local `.pi/skills/impeccable/scripts` directory takes precedence, preserving Impeccable's normal project install behavior.
+- The npm package depends on the official [`impeccable`](https://www.npmjs.com/package/impeccable) CLI.
+- `/impeccable install` runs a non-interactive, hook-free global installation for Pi's native skill format.
+- The extension discovers project or global `.pi/skills/impeccable` installations, with `.agents/skills/impeccable` compatibility, through Pi's `resources_discover` event.
+- Normal commands forward to the upstream skill without maintaining a fork or vendored copy.
+- The upstream skill owns its update check, including daily throttling and asking the user before an update.
 
-## Update from upstream
+## Commands
 
-Import a released upstream skill tag:
-
-```bash
-npm run update:upstream --workspace pi-impeccable-skill -- skill-v4.0.4
-npm test --workspace pi-impeccable-skill
+```text
+/impeccable install
+/impeccable update
+/impeccable init
+/impeccable shape <target>
+/impeccable craft <target>
+/impeccable critique <target>
+/impeccable audit <target>
+/impeccable polish <target>
 ```
 
-The updater:
+All upstream Impeccable commands remain available.
 
-1. Resolves the exact Git commit behind the tag.
-2. Downloads the archive by commit rather than by a moving branch.
-3. Verifies that `SKILL.md` reports the tag's version.
-4. Replaces only the vendored skill and upstream license.
-5. Records the commit and archive SHA-256 in `UPSTREAM.json`.
-
-Review the vendored diff before committing an update. Upstream's skill, references, scripts, and agents are executable instructions and must be treated as trusted code.
-
-## Development
+## Local development
 
 ```bash
+pi install ./packages/pi-impeccable-skill
 npm test --workspace pi-impeccable-skill
 npm pack --workspace pi-impeccable-skill --dry-run
 ```
 
 ## Licensing
 
-The Pi adapter is MIT licensed. Vendored Impeccable files remain under the upstream Apache-2.0 license, included at [`THIRD_PARTY_LICENSES/IMPECCABLE-APACHE-2.0.txt`](./THIRD_PARTY_LICENSES/IMPECCABLE-APACHE-2.0.txt).
+The Pi adapter is MIT licensed. Impeccable is installed separately by its official npm package and remains under its upstream Apache-2.0 license.

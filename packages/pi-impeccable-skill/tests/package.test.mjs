@@ -1,85 +1,99 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 
 import impeccablePiExtension, {
   getImpeccableCompletions,
+  locateImpeccableSkill,
   rewriteImpeccableScriptPaths,
 } from "../extensions/impeccable.js";
 
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"));
-const upstream = JSON.parse(readFileSync(join(PACKAGE_ROOT, "UPSTREAM.json"), "utf8"));
-const skill = readFileSync(join(PACKAGE_ROOT, "vendor", "impeccable", "SKILL.md"), "utf8");
+
+function fixtureSkill() {
+  const root = join(tmpdir(), `pi-impeccable-test-${process.pid}-${Date.now()}-${Math.random()}`);
+  const skill = join(root, ".agents", "skills", "impeccable");
+  mkdirSync(join(skill, "scripts"), { recursive: true });
+  writeFileSync(join(skill, "SKILL.md"), "---\nname: impeccable\nversion: 9.9.9\n---\n");
+  writeFileSync(join(skill, "scripts", "command-metadata.json"), "{}");
+  return { root, skill, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
 
 describe("Pi package", () => {
-  it("declares the extension and vendored skill", () => {
+  it("ships only the adapter and depends on the official CLI", () => {
+    assert.equal(pkg.version, "0.2.0");
     assert.equal(pkg.keywords.includes("pi-package"), true);
-    assert.deepEqual(pkg.pi, {
-      extensions: ["./extensions/impeccable.js"],
-      skills: ["./vendor"],
-    });
-    assert.equal(pkg.files.includes("vendor"), true);
-    assert.equal(pkg.files.includes("THIRD_PARTY_LICENSES"), true);
+    assert.deepEqual(pkg.pi, { extensions: ["./extensions/impeccable.js"] });
+    assert.deepEqual(pkg.dependencies, { impeccable: "^3.5.0" });
+    assert.equal(pkg.files.includes("vendor"), false);
+    assert.equal(existsSync(join(PACKAGE_ROOT, "vendor")), false);
   });
 
-  it("pins a released upstream skill and its license", () => {
-    assert.match(upstream.tag, /^skill-v\d+\.\d+\.\d+/);
-    assert.match(upstream.commit, /^[0-9a-f]{40}$/);
-    assert.match(upstream.archiveSha256, /^[0-9a-f]{64}$/);
-    assert.match(skill, new RegExp(`^version:\\s*${upstream.version}\\s*$`, "m"));
-    assert.equal(upstream.tag, `skill-v${upstream.version}`);
-    assert.equal(
-      existsSync(join(PACKAGE_ROOT, "THIRD_PARTY_LICENSES", "IMPECCABLE-APACHE-2.0.txt")),
-      true,
-    );
+  it("finds a project installation of the upstream skill", () => {
+    const fixture = fixtureSkill();
+    try {
+      assert.equal(locateImpeccableSkill(fixture.root, "/tmp/no-home"), fixture.skill);
+    } finally {
+      fixture.cleanup();
+    }
   });
 });
 
 describe("script path compatibility", () => {
-  it("rewrites bundled script calls when a project has no local skill", () => {
-    const rewritten = rewriteImpeccableScriptPaths(
-      "node .pi/skills/impeccable/scripts/context.mjs --target src",
-      { scriptsDir: "/tmp/impeccable package/vendor/impeccable/scripts", hasLocalScripts: false },
-    );
-
+  it("rewrites Pi and Agents script calls to the discovered installation", () => {
+    const options = {
+      cwd: "/tmp/project",
+      localScriptDirs: [],
+      skillRoot: "/tmp/impeccable skill",
+    };
     assert.equal(
-      rewritten,
-      "node '/tmp/impeccable package/vendor/impeccable/scripts'/context.mjs --target src",
+      rewriteImpeccableScriptPaths(
+        "node .pi/skills/impeccable/scripts/context.mjs --target src",
+        options,
+      ),
+      "node '/tmp/impeccable skill/scripts'/context.mjs --target src",
+    );
+    assert.equal(
+      rewriteImpeccableScriptPaths(
+        'node ".agents/skills/impeccable/scripts/context.mjs"',
+        options,
+      ),
+      'node "/tmp/impeccable skill/scripts/context.mjs"',
     );
   });
 
-  it("preserves quoted paths and project-local installs", () => {
-    assert.equal(
-      rewriteImpeccableScriptPaths('node ".pi/skills/impeccable/scripts/context.mjs"', {
-        scriptsDir: "/tmp/package/vendor/impeccable/scripts",
-        hasLocalScripts: false,
-      }),
-      'node "/tmp/package/vendor/impeccable/scripts/context.mjs"',
-    );
-
-    const command = "node .pi/skills/impeccable/scripts/context.mjs";
-    assert.equal(
-      rewriteImpeccableScriptPaths(command, { hasLocalScripts: true }),
-      command,
-    );
+  it("leaves project-local script paths untouched", () => {
+    const command = "node .agents/skills/impeccable/scripts/context.mjs";
+    const existing = join(tmpdir(), `pi-impeccable-scripts-${process.pid}-${Date.now()}`);
+    mkdirSync(existing, { recursive: true });
+    try {
+      assert.equal(
+        rewriteImpeccableScriptPaths(command, { localScriptDirs: [existing] }),
+        command,
+      );
+    } finally {
+      rmSync(existing, { recursive: true, force: true });
+    }
   });
 });
 
 describe("/impeccable command", () => {
-  it("completes subcommands", () => {
+  it("completes upstream and management subcommands", () => {
     const completions = getImpeccableCompletions("au", {
       audit: { description: "Run checks", argumentHint: "[target]" },
       polish: { description: "Final pass", argumentHint: "[target]" },
     });
-
     assert.deepEqual(completions?.map((item) => item.value), ["audit "]);
+    assert.deepEqual(getImpeccableCompletions("up")?.map((item) => item.value), ["update"]);
     assert.equal(getImpeccableCompletions("audit src"), null);
   });
 
-  it("forwards to the skill and installs the bash rewrite hook", async () => {
+  it("discovers the skill, forwards commands, and installs the bash hook", async () => {
+    const fixture = fixtureSkill();
     const commands = new Map();
     const handlers = new Map();
     const sentMessages = [];
@@ -95,13 +109,25 @@ describe("/impeccable command", () => {
       },
     };
 
-    impeccablePiExtension(pi);
-    assert.equal(commands.has("impeccable"), true);
-    assert.equal(handlers.has("tool_call"), true);
+    try {
+      impeccablePiExtension(pi);
+      assert.equal(commands.has("impeccable"), true);
+      assert.equal(handlers.has("resources_discover"), true);
+      assert.equal(handlers.has("tool_call"), true);
+      assert.deepEqual(handlers.get("resources_discover")({ cwd: fixture.root }), {
+        skillPaths: [fixture.skill],
+      });
 
-    await commands.get("impeccable").handler("audit src", { isIdle: () => true });
-    assert.deepEqual(sentMessages, [
-      { message: "/skill:impeccable audit src", options: undefined },
-    ]);
+      await commands.get("impeccable").handler("audit src", {
+        cwd: fixture.root,
+        hasUI: true,
+        isIdle: () => true,
+      });
+      assert.deepEqual(sentMessages, [
+        { message: "/skill:impeccable audit src", options: undefined },
+      ]);
+    } finally {
+      fixture.cleanup();
+    }
   });
 });
