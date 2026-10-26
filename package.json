@@ -4,5 +4,8 @@
   "description": "Monorepo for Pi extensions, skills, prompts, and themes.",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "overrides": {
+    "undici": "^8.12.2"
+  }
 }
